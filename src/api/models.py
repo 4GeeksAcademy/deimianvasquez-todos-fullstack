@@ -3,7 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 db = SQLAlchemy()
 
 class User(db.Model):
-    id = db.Column(db.Integer(), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(80), nullable=False)
     email = db.Column(db.String(80), nullable=False, unique=True)
     password = db.Column(db.String(180), nullable=False)
@@ -13,6 +13,11 @@ class User(db.Model):
     updated_at = db.Column(db.DateTime(timezone=True), default=db.func.now(), onupdate=db.func.now(), nullable=False)
     todos = db.relationship("Todos", back_populates="user")
 
+    def serialize(self):
+        return {
+            "id": self.id,
+            "email": self.email
+        }
 
 
 class Todos(db.Model):
