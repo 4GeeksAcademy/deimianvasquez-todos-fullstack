@@ -55,7 +55,6 @@ def add_new_user():
         return jsonify(f"Error: {err.args}"), 500
     
 
-
 @api.route("/login", methods=["POST"])
 def login():
     try:
