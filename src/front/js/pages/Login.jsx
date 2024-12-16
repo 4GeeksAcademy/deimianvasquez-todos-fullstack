@@ -28,7 +28,7 @@ const Login = () => {
         const response = await actions.login(user)
 
         if (response == 200) {
-            // <Navigate to={"/"} />
+
             navigate("/")
         } else if (response == 400) {
             alert("Mala contraseña")
