@@ -1,9 +1,15 @@
-import React from "react"
+import React, { useContext } from "react"
+import { Context } from "../store/appContext"
 
+const Todos = () => {
+    const { store } = useContext(Context)
 
-const Todos =()=>{
     return (
-        <h1>Todos</h1>
+        <>
+            <h1>Todos</h1>
+            <img src={store.currentUser?.avatar} />
+
+        </>
     )
 }
 

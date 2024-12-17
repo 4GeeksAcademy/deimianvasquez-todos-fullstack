@@ -2,17 +2,14 @@ const getState = ({ getStore, getActions, setStore }) => {
 	return {
 		store: {
 			token: localStorage.getItem("token") || null,
-			currenUser: localStorage.getItem("userCurrent") || null
+			currentUser: localStorage.getItem("currentUser") || null
 		},
 		actions: {
 			register: async (user) => {
 				try {
 					const response = await fetch(`${process.env.BACKEND_URL}/register`, {
 						method: "POST",
-						headers: {
-							"Content-Type": "application/json"
-						},
-						body: JSON.stringify(user)
+						body: user
 					})
 
 					return response.status

@@ -9,6 +9,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from base64 import b64encode
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
+import cloudinary.uploader as uploader 
 
 api = Blueprint('api', __name__)
 
@@ -20,11 +21,21 @@ CORS(api)
 @api.route('/register', methods=['POST'])
 def add_new_user():
     try:
-        body = request.json
+        body_form = request.form
+        body_files = request.files
 
-        email = body.get("email", None)
-        name = body.get("name", None)
-        password = body.get("password", None)
+
+        email = body_form.get("email", None)
+        name = body_form.get("name", None)
+        password = body_form.get("password", None)
+        avatar = body_files.get("avatar", None)
+
+        print({
+            "email":email,
+            "name":name,
+            "password":password,
+            "avatar": avatar
+        })
 
         if email is None or password is None or name is None:
             return jsonify("Email, Password and Name required"), 400
@@ -36,6 +47,10 @@ def add_new_user():
             if user_exist is not None:
                 return jsonify("User exists"), 400
 
+            avatar = uploader.upload(avatar)
+            avatar = avatar["secure_url"]
+
+            print(avatar)
             salt = b64encode(os.urandom(32)).decode("utf-8")
             password = generate_password_hash(f"{password}{salt}") # 1234klsflksndlkfnlskdfnlskdnflksndlfknsldkfnlsdknf
 
@@ -43,6 +58,7 @@ def add_new_user():
             user.email = email
             user.password = password
             user.salt= salt
+            user.avatar=avatar
             db.session.add(user)
 
             try:
@@ -50,6 +66,7 @@ def add_new_user():
                 return jsonify("user created success"), 201
             except Exception as err:
                 return jsonify(f"Error: {err.args}"), 500
+      
             
     except Exception as err:
         return jsonify(f"Error: {err.args}"), 500

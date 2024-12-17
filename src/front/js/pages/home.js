@@ -10,11 +10,11 @@ export const Home = () => {
 
 	return (
 		<>
-		{
-			store.token ?
-			<Todos/> :
-			<Navigate to={"/login"}/>
-		}
+			{
+				store.token ?
+					<Todos /> :
+					<Navigate to={"/login"} />
+			}
 		</>
 	);
 };
