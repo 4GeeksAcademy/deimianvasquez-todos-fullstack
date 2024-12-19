@@ -3,18 +3,23 @@ This module takes care of starting the API Server, Loading the DB and Adding the
 """
 from flask import Flask, request, jsonify, url_for, Blueprint
 from api.models import db, User, Todos
-from api.utils import generate_sitemap, APIException
+from api.utils import generate_sitemap, APIException, send_mail
 from flask_cors import CORS
 from werkzeug.security import generate_password_hash, check_password_hash
 import os
 from base64 import b64encode
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt_identity
 import cloudinary.uploader as uploader 
+from datetime import timedelta
 
 api = Blueprint('api', __name__)
 
 # Allow CORS requests to this API
 CORS(api)
+
+# tiempo a expirar el token de recovery
+expire_in_minute = 10
+expire_delta = timedelta(minutes=expire_in_minute)
 
 
 # ruta donde registramos un usuario
@@ -144,3 +149,58 @@ def get_all_todos():
 
     except Exception as err:
         return jsonify(err.args), 500
+
+
+@api.route("/reset-password", methods=["POST"])
+def recovery_password():
+    try:
+        body = request.json
+        print(body)
+
+        recovery_token = create_access_token(identity=str(body.get("email")), expires_delta=expire_delta)
+
+        message = f"""
+                    <h1>Se solicito recupetación de contraseña, ingrese en el siguiente link</h1>
+                    <a href="https://potential-funicular-ppgwrqgxqvxc76wj-3000.app.github.dev/password-update?token={recovery_token}">
+                        ir a recuperar contraseña
+                    </a>
+                   """
+
+
+
+        response = send_mail("Recuperacion de contraseña",body.get("email"), message)
+        print(response)  
+
+        return jsonify("Correo enviado exitosamente"),200
+    except Exception as err:
+        return jsonify(f"Error: {err.args}")
+    
+
+@api.route("/update-password", methods=["PUT"])
+@jwt_required()
+def update_password():
+    try:
+        email = get_jwt_identity()
+        password = request.json
+
+        user = User.query.filter_by(email=email).one_or_none()
+
+        if user is not None:
+            salt = b64encode(os.urandom(32)).decode("utf-8")
+            password= generate_password_hash(f"{password}{salt}") # 1234klsflksndlkfnlskdfnlskdnflksndlfknsldkfnlsdknf
+            user.salt = salt
+            user.password = password
+
+            try:
+                db.session.commit()
+                return jsonify("Clave actualizada bien"), 200
+            except Exception as error:
+                print(error.args)
+                return jsonify("No se puede actualizar el password"), 400
+
+       
+        return jsonify("trabajando por usted"), 200
+
+    except Exception as err:
+        print(err.args)
+        return jsonify(f"Err: {err.args}")
